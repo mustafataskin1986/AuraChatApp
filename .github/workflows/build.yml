@@ -1,0 +1,50 @@
+name: Build Native APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zip'i aç
+        run: unzip -q aurachat-native.zip
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: google-services.json
+        working-directory: aurachat-native
+        env:
+          GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GSJ" ]; then echo "HATA: GOOGLE_SERVICES_JSON secret yok"; exit 1; fi
+          printf '%s' "$GSJ" > app/google-services.json
+
+      - name: Keystore
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$KS" ]; then echo "$KS" | base64 -d > ~/.android/debug.keystore; fi
+
+      - name: APK derle
+        working-directory: aurachat-native
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AuraChat-native-apk
+          path: aurachat-native/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 1
