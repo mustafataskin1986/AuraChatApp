@@ -36,8 +36,13 @@ jobs:
       - name: İmza parmak izi
         continue-on-error: true
         run: |
+          echo "=== Keystore dosyasının SHA1'i ==="
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -E "SHA1|SHA256" || true
+          echo "=== APK'nın gerçek imzası ==="
           AS=$(ls -d $ANDROID_HOME/build-tools/*/ | tail -1)apksigner
-          $AS verify --print-certs aurachat-native/app/build/outputs/apk/debug/app-debug.apk | grep -i "digest"
+          $AS verify --print-certs aurachat-native/app/build/outputs/apk/debug/app-debug.apk || true
+          echo "=== google-services.json'daki paket ve hash ==="
+          grep -E "package_name|certificate_hash" google-services.json || true
 
       - uses: actions/upload-artifact@v4
         with:
@@ -46,12 +51,13 @@ jobs:
           retention-days: 1
 
       - name: Eski APK'ları sil
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api --paginate "repos/${{ github.repository }}/actions/artifacts" \
-            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id' |
-          while read id; do
-            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
+          echo "Bu çalışma: ${{ github.run_id }}"
+          IDS=$(gh api --paginate "repos/${{ github.repository }}/actions/artifacts" \
+            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id') || echo "LİSTE HATASI"
+          echo "Silinecekler: $IDS"
+          for id in $IDS; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" && echo "silindi $id" || echo "SİLİNEMEDİ $id"
           done
