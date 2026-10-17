@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "447747395966-dk1h48us9nhj961a8hli3ohgvrh4hk4p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aurachat",
+            "certificate_hash": "46b0e29062b175e3cca8394962ceb2230fe25ff4"
+          }
+        },
+        {
           "client_id": "447747395966-3shresouu36769er1b9656oec8vd13aa.apps.googleusercontent.com",
           "client_type": 3
         }
