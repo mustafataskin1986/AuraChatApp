@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   build:
@@ -31,10 +32,26 @@ jobs:
       - name: APK derle
         working-directory: aurachat-native
         run: gradle assembleDebug --no-daemon --stacktrace
+
       - name: İmza parmak izi
-        run: keytool -printcert -jarfile aurachat-native/app/build/outputs/apk/debug/app-debug.apk | grep -E "SHA1|SHA256"
+        continue-on-error: true
+        run: |
+          AS=$(ls -d $ANDROID_HOME/build-tools/*/ | tail -1)apksigner
+          $AS verify --print-certs aurachat-native/app/build/outputs/apk/debug/app-debug.apk | grep -i "digest"
+
       - uses: actions/upload-artifact@v4
         with:
           name: AuraChat-native-apk
           path: aurachat-native/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 1
+
+      - name: Eski APK'ları sil
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts" \
+            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id' |
+          while read id; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
+          done
