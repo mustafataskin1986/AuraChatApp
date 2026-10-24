@@ -20,10 +20,10 @@ jobs:
 
       - name: Zip'i aç
         run: |
-          unzip -q aurachat-native.zip
-          cp google-services.json aurachat-native/app/google-services.json
+          unzip -qo aurachat-native.zip
+          cp -f google-services.json aurachat-native/app/google-services.json
           mkdir -p ~/.android
-          cp aurachat-native/aura-debug.keystore ~/.android/debug.keystore
+          cp -f aurachat-native/aura-debug.keystore ~/.android/debug.keystore
 
       - uses: actions/setup-java@v4
         with:
