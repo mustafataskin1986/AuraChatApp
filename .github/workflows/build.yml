@@ -4,8 +4,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: write
+
+# Aynı anda iki derleme çalışmasın; yenisi gelince eskisi iptal olur
+concurrency:
+  group: build-native
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -44,20 +49,44 @@ jobs:
           echo "=== google-services.json'daki paket ve hash ==="
           grep -E "package_name|certificate_hash" google-services.json || true
 
+      # APK 1 gün sonra kendiliğinden silinir (retention-days: 1)
       - uses: actions/upload-artifact@v4
         with:
           name: AuraChat-native-apk
           path: aurachat-native/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 1
 
-      - name: Eski APK'ları sil
+      # Sabit indirme bağlantısı: her derlemede "apk-latest" sürümü yenilenir (tarih/saat ve commit yazılır), adres hep aynı kalır
+      - name: APK'yı sabit sürüm bağlantısına yükle
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp aurachat-native/app/build/outputs/apk/debug/app-debug.apk AuraChat.apk
+          STAMP="Son derleme: $(TZ=Europe/Istanbul date '+%d.%m.%Y %H:%M') - commit ${GITHUB_SHA::7}"
+          gh release delete apk-latest --cleanup-tag -y > /dev/null 2>&1 || true
+          if ! gh release create apk-latest AuraChat.apk --title "AuraChat APK" --notes "$STAMP" --target "$GITHUB_SHA" --latest; then
+            gh release view apk-latest > /dev/null 2>&1 || gh release create apk-latest --title "AuraChat APK" --notes "$STAMP" --latest
+            gh release upload apk-latest AuraChat.apk --clobber
+            gh release edit apk-latest --notes "$STAMP"
+          fi
+
+      # Derleme başarılı da olsa hata da verse çalışır: eski APK'ları ve eski çalışma kayıtlarını temizler
+      - name: Eski APK'ları ve kayıtları sil
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
           echo "Bu çalışma: ${{ github.run_id }}"
-          IDS=$(gh api --paginate "repos/${{ github.repository }}/actions/artifacts" \
-            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id') || echo "LİSTE HATASI"
-          echo "Silinecekler: $IDS"
-          for id in $IDS; do
-            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" && echo "silindi $id" || echo "SİLİNEMEDİ $id"
+          # 1) Başka çalışmalara ait tüm APK (artifact) dosyaları
+          gh api --paginate "repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id' | while read id; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" > /dev/null && echo "APK silindi: $id" || echo "SILINEMEDI APK: $id"
           done
+          # 2) Eski çalışma kayıtları (bu çalışma ve en yeni 2 tamamlanan kalır)
+          gh api --paginate "repos/${{ github.repository }}/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | select(.status=="completed") | .id' \
+            | grep -v "^${{ github.run_id }}$" | tail -n +3 | while read id; do
+            gh api -X DELETE "repos/${{ github.repository }}/actions/runs/$id" > /dev/null && echo "Kayıt silindi: $id" || echo "SILINEMEDI kayıt: $id"
+          done
+          exit 0
