@@ -1,1 +1,9 @@
 
+{
+  "name": "aurachat-server",
+  "version": "1.0.0",
+  "description": "AuraChat bildirim sunucusu (Vercel)",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
