@@ -70,6 +70,27 @@ jobs:
             gh release edit apk-latest --notes "$STAMP"
           fi
 
+      # Yeni sürümü telefonlara anında haber ver (FCM "updates" konusu). FIREBASE_SERVICE_ACCOUNT gizli anahtarı yoksa atlanır
+      - name: Telefonlara güncelleme bildirimi gönder
+        continue-on-error: true
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA_JSON" ]; then echo "FIREBASE_SERVICE_ACCOUNT yok, atlandı"; exit 0; fi
+          pip install -q google-auth requests
+          python3 - <<'PY'
+          import os, json, requests
+          from google.oauth2 import service_account
+          from google.auth.transport.requests import Request
+          info = json.loads(os.environ["SA_JSON"])
+          cred = service_account.Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/firebase.messaging"])
+          cred.refresh(Request())
+          body = {"message": {"topic": "updates", "data": {"kind": "update", "build": "${{ github.run_number }}"}, "android": {"priority": "HIGH"}}}
+          r = requests.post("https://fcm.googleapis.com/v1/projects/" + info["project_id"] + "/messages:send",
+                            headers={"Authorization": "Bearer " + cred.token}, json=body)
+          print(r.status_code, r.text)
+          PY
+
       # Derleme başarılı da olsa hata da verse çalışır: eski APK'ları ve eski çalışma kayıtlarını temizler
       - name: Eski APK'ları ve kayıtları sil
         if: always()
