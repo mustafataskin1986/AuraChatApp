@@ -36,7 +36,7 @@ jobs:
 
       - name: APK derle
         working-directory: aurachat-native
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleDebug -PbuildNumber=${{ github.run_number }} --no-daemon --stacktrace
 
       - name: İmza parmak izi
         continue-on-error: true
@@ -62,7 +62,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cp aurachat-native/app/build/outputs/apk/debug/app-debug.apk AuraChat.apk
-          STAMP="Son derleme: $(TZ=Europe/Istanbul date '+%d.%m.%Y %H:%M') - commit ${GITHUB_SHA::7}"
+          STAMP="Son derleme: $(TZ=Europe/Istanbul date '+%d.%m.%Y %H:%M') - commit ${GITHUB_SHA::7} - build ${{ github.run_number }}"
           gh release delete apk-latest --cleanup-tag -y > /dev/null 2>&1 || true
           if ! gh release create apk-latest AuraChat.apk --title "AuraChat APK" --notes "$STAMP" --target "$GITHUB_SHA" --latest; then
             gh release view apk-latest > /dev/null 2>&1 || gh release create apk-latest --title "AuraChat APK" --notes "$STAMP" --latest
