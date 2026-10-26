@@ -2,6 +2,10 @@ name: Build Native APK
 
 on:
   workflow_dispatch:
+  # Repo köküne yeni aurachat-native.zip yüklenince kendiliğinden derler
+  push:
+    paths:
+      - "aurachat-native.zip"
 
 permissions:
   contents: write
