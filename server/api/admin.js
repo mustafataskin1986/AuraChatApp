@@ -42,6 +42,10 @@ export default async function handler(req, res) {
   try {
     if (action === 'users') {
       const snap = await db.collection('users').limit(3000).get();
+      // gerçek "son görülme": presence koleksiyonu (uygulama açıkken güncellenir); yoksa son token yenileme
+      const presSnap = await db.collection('presence').limit(3000).get();
+      const pres = {};
+      presSnap.docs.forEach((p) => { pres[p.id] = p.data(); });
       const users = snap.docs.map((d) => {
         const u = d.data();
         return {
@@ -51,7 +55,7 @@ export default async function handler(req, res) {
           phone: u.phone || '',
           platform: u.platform || '',
           hasToken: !!tokenOf(u),
-          lastSeen: ms(u.lastSeen),
+          lastSeen: (pres[d.id] && pres[d.id].online === true) ? Date.now() : Math.max(ms(pres[d.id] && pres[d.id].lastSeen), ms(u.lastTokenUpdate), 0) || ms(u.lastSeen),
         };
       }).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
       return res.status(200).json({ users });
