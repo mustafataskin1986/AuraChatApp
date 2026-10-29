@@ -61,6 +61,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ users });
     }
 
+    if (action === 'reports') {
+      const snap = await db.collection('reports').orderBy('at', 'desc').limit(300).get();
+      const reports = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      return res.status(200).json({ reports });
+    }
+
+    if (action === 'reportDone') {
+      const id = String((req.body || {}).id || '');
+      if (!id) return res.status(400).json({ error: 'Kayıt yok.' });
+      await db.collection('reports').doc(id).delete();
+      return res.status(200).json({ ok: true });
+    }
+
     if (action === 'send') {
       const { title, body, mode, uids } = req.body;
       if (!title || !body) return res.status(400).json({ error: 'Başlık ve metin gerekli.' });
