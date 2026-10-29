@@ -73,7 +73,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.3.0")
     // QR kod: üretmek için zxing core, taramak için Google kod tarayıcı (kamera izni gerektirmez)
     implementation("com.google.zxing:core:3.5.3")
-    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("io.getstream:stream-webrtc-android:1.1.1")
     implementation("androidx.core:core-splashscreen:1.0.1")
