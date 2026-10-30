@@ -34,6 +34,7 @@ export default async function handler(req, res) {
       isGroup: b.isGroup === true,
       reason,
       note: String(b.note || '').slice(0, 500),
+      messages: Array.isArray(b.messages) ? b.messages.slice(0, 5).map((m) => String(m).slice(0, 300)) : [],
       at: Date.now(),
       status: 'open',
     });
