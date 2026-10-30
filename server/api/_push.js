@@ -1,4 +1,3 @@
-
 import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
@@ -93,7 +92,8 @@ export async function deliverPush({ senderUid, receiverUid, title, body, data, t
       } catch (e) {}
     }
 
-    if (!isCall && !isMention && chatSummarySnap.exists && chatSummarySnap.data().muted === true) {
+    if (!isCall && !isMention && chatSummarySnap.exists && chatSummarySnap.data().muted === true &&
+        !((chatSummarySnap.data().mutedUntil || 0) > 0 && chatSummarySnap.data().mutedUntil < Date.now())) {
       return { status: 200, body: { success: false, reason: 'muted' } };
     }
 
