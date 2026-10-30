@@ -34,7 +34,9 @@ export default async function handler(req, res) {
       isGroup: b.isGroup === true,
       reason,
       note: String(b.note || '').slice(0, 500),
-      messages: Array.isArray(b.messages) ? b.messages.slice(0, 5).map((m) => String(m).slice(0, 300)) : [],
+      messages: Array.isArray(b.messages) ? b.messages.slice(0, 5).map((m) => (m && typeof m === 'object'
+        ? { t: Number(m.t) || 0, w: String(m.w || '').slice(0, 100), me: m.me === true, x: String(m.x || '').slice(0, 300) }
+        : { t: 0, w: '', me: false, x: String(m).slice(0, 300) })) : [],
       at: Date.now(),
       status: 'open',
     });
