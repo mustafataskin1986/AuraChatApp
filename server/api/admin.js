@@ -74,6 +74,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    if (action === 'ban') {
+      const uid = String((req.body || {}).uid || '');
+      const id = String((req.body || {}).id || '');
+      if (!uid) return res.status(400).json({ error: 'Kullanıcı yok.' });
+      try { await admin.auth().updateUser(uid, { disabled: true }); } catch (e) {}
+      try { await admin.auth().revokeRefreshTokens(uid); } catch (e) {}
+      try { await db.collection('users').doc(uid).set({ banned: true, bannedAt: Date.now() }, { merge: true }); } catch (e) {}
+      if (id) { try { await db.collection('reports').doc(id).delete(); } catch (e) {} }
+      return res.status(200).json({ ok: true });
+    }
+
     if (action === 'send') {
       const { title, body, mode, uids } = req.body;
       if (!title || !body) return res.status(400).json({ error: 'Başlık ve metin gerekli.' });
