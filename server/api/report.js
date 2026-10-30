@@ -22,8 +22,9 @@ export default async function handler(req, res) {
   try {
     // spam'i önle: aynı kişi aynı sohbeti son 10 dakikada tekrar şikayet edemez
     const since = Date.now() - 10 * 60 * 1000;
-    const dup = await db.collection('reports').where('reporterUid', '==', decoded.uid).where('chatId', '==', chatId).where('at', '>', since).limit(1).get();
-    if (!dup.empty) return res.status(200).json({ ok: true });
+    // tek alan sorgusu (bileşik indeks gerektirmez), gerisi kodda süzülür
+    const recent = await db.collection('reports').where('reporterUid', '==', decoded.uid).limit(50).get();
+    if (recent.docs.some((d) => d.get('chatId') === chatId && (d.get('at') || 0) > since)) return res.status(200).json({ ok: true });
     await db.collection('reports').add({
       reporterUid: decoded.uid,
       reporterName: String(b.reporterName || '').slice(0, 100),
