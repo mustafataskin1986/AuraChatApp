@@ -35,8 +35,9 @@ export default async function handler(req, res) {
       reason,
       note: String(b.note || '').slice(0, 500),
       messages: Array.isArray(b.messages) ? b.messages.slice(0, 5).map((m) => (m && typeof m === 'object'
-        ? { t: Number(m.t) || 0, w: String(m.w || '').slice(0, 100), me: m.me === true, x: String(m.x || '').slice(0, 300) }
+        ? { t: Number(m.t) || 0, w: String(m.w || '').slice(0, 100), u: String(m.u || '').slice(0, 128), k: ['image', 'audio', 'video', 'file', 'location'].includes(m.k) ? m.k : 'text', me: m.me === true, x: String(m.x || '').slice(0, 300) }
         : { t: 0, w: '', me: false, x: String(m).slice(0, 300) })) : [],
+      bubble: /^#[0-9A-Fa-f]{6}$/.test(String(b.bubble || '')) ? String(b.bubble) : '',
       at: Date.now(),
       status: 'open',
     });
