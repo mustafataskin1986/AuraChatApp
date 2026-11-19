@@ -2,8 +2,8 @@
 // Telefonda AuraChat yüklüyse uygulamayı açar, değilse bilgi sayfası gösterir.
 module.exports = (req, res) => {
   const u = String((req.query && req.query.u) || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 64);
-  const app = 'aurachat://u/' + u;
-  const intent = 'intent://u/' + u + '#Intent;scheme=aurachat;package=com.aurachat;end';
+  const k = String((req.query && req.query.k) || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 32);
+  const intent = 'intent://u/' + u + (k ? '?k=' + k : '') + '#Intent;scheme=aurachat;package=com.aurachat;end';
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.status(200).send(`<!doctype html>
