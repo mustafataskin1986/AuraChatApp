@@ -9,6 +9,14 @@ module.exports = (req, res) => {
   res.status(200).send(`<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AuraChat</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AuraChat">
+<meta property="og:title" content="AuraChat">
+<meta property="og:description" content="AuraChat'te benimle sohbet et">
+<meta property="og:image" content="https://aurachat-amber.vercel.app/aurachat-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b141a;color:#e9edef;font-family:system-ui,sans-serif;text-align:center}
 .c{padding:28px;max-width:360px}
